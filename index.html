@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <link rel="icon" href="data:," />
+    <title>VOXEL TS · 插件式方块世界</title>
+    <script type="module" crossorigin src="./assets/index-DRywtSYm.js"></script>
+    <link rel="modulepreload" crossorigin href="./assets/three-B-Vxs9r7.js">
+    <link rel="stylesheet" crossorigin href="./assets/index-CefxR-Eg.css">
+  </head>
+  <body>
+    <canvas id="view"></canvas>
+    <div id="tint" aria-hidden="true"></div>
+
+    <div id="crosshair" aria-hidden="true"></div>
+    <div id="hud"></div>
+    <div id="target"></div>
+    <div id="clock-badge"></div>
+    <div id="hotbar" class="hidden"></div>
+    <div id="toasts"></div>
+
+    <div id="menu" class="menu">
+      <div class="menu-shade"></div>
+      <aside class="menu-panel">
+        <header class="brand">
+          <div class="brand-mark">VT</div>
+          <div class="brand-text">
+            <h1>VOXEL<span>TS</span></h1>
+            <p>插件式方块世界 · v0.8</p>
+          </div>
+        </header>
+
+        <div class="menu-body">
+          <!-- 主菜单 -->
+          <section class="page active" data-page="main">
+            <div class="hero">
+              <strong>一切皆插件。</strong>
+              地形、方块、昼夜、物理、存档、HUD 都是可开关的插件；
+              甚至可以在运行时从 URL 或粘贴的源码热加载第三方玩法。
+            </div>
+            <div class="btn-list">
+              <button class="btn primary" data-action="new">开始新世界 <small>生成全新地形</small></button>
+              <button class="btn" data-action="continue">继续世界 <small id="continue-hint">读取最近存档</small></button>
+              <button class="btn" data-action="goto" data-target="saves">存档管理</button>
+              <button class="btn" data-action="goto" data-target="settings">设置</button>
+              <button class="btn" data-action="goto" data-target="plugins">插件仓库 <span id="plugin-count" class="pill">0</span></button>
+              <button class="btn" data-action="goto" data-target="audit">深度审批 <span class="muted" style="font-size:10px">类型化规则引擎</span></button>
+              <button class="btn" data-action="goto" data-target="help">操作说明</button>
+              <button class="btn ghost" data-action="goto" data-target="about">关于本项目</button>
+            </div>
+            <div class="menu-foot">WASD 移动 · 鼠标视角 · 点击画面锁定指针 · Esc 呼出菜单</div>
+          </section>
+
+          <!-- 暂停 -->
+          <section class="page" data-page="pause">
+            <h2>已暂停</h2>
+            <p class="muted">世界仍在后台渲染，时间继续流动。</p>
+            <div class="btn-list">
+              <button class="btn primary" data-action="resume">继续游戏</button>
+              <button class="btn" data-action="goto" data-target="saves">存档管理</button>
+              <button class="btn" data-action="goto" data-target="settings">设置</button>
+              <button class="btn" data-action="goto" data-target="plugins">插件仓库</button>
+              <button class="btn" data-action="goto" data-target="audit">深度审批</button>
+              <button class="btn ghost" data-action="main">返回主菜单</button>
+            </div>
+          </section>
+
+          <!-- 设置 -->
+          <section class="page" data-page="settings">
+            <h2>设置</h2>
+            <div class="settings" id="settings-form">
+              <label class="row"><span>游戏模式</span>
+                <select data-setting="mode"><option value="creative">创造</option><option value="survival">生存</option></select>
+              </label>
+              <label class="row"><span>昼夜循环</span><input type="checkbox" data-setting="dayCycle" /></label>
+              <label class="row"><span>时间流速</span><input type="range" min="0" max="8" step="0.5" data-setting="timeScale" /><b data-value="timeScale"></b></label>
+              <label class="row"><span>当前时刻</span><input type="range" min="0" max="0.999" step="0.005" data-setting="phase" /><b data-value="phase"></b></label>
+              <label class="row"><span>视距</span><input type="range" min="0.5" max="2" step="0.1" data-setting="viewDistance" /><b data-value="viewDistance"></b></label>
+              <label class="row"><span>鼠标灵敏度</span><input type="range" min="0.2" max="3" step="0.1" data-setting="sensitivity" /><b data-value="sensitivity"></b></label>
+              <label class="row"><span>视野 FOV</span><input type="range" min="60" max="100" step="1" data-setting="fov" /><b data-value="fov"></b></label>
+              <label class="row"><span>漂移云层</span><input type="checkbox" data-setting="clouds" /></label>
+              <label class="row"><span>破坏粒子</span><input type="checkbox" data-setting="particles" /></label>
+              <label class="row"><span>顶点 AO</span><input type="checkbox" data-setting="ao" /></label>
+              <label class="row"><span>显示 HUD</span><input type="checkbox" data-setting="showHud" /></label>
+              <label class="row"><span>自动存档</span><input type="checkbox" data-setting="autoSave" /></label>
+            </div>
+            <div class="btn-row">
+              <button class="btn small" data-action="reset-settings">恢复默认</button>
+              <button class="btn small ghost" data-action="back">返回</button>
+            </div>
+          </section>
+
+          <!-- 插件仓库 -->
+          <section class="page" data-page="plugins">
+            <h2>插件仓库 <span class="muted" style="font-size:12px">运行时热插拔</span></h2>
+            <div class="stat-strip" id="catalog-stats"></div>
+            <div class="perf-strip" id="perf-stats"></div>
+            <div class="plugin-list" id="plugin-list"></div>
+            <div class="install">
+              <h3>从 URL 安装 ESM 插件</h3>
+              <div class="btn-row">
+                <input id="plugin-url" type="text" value="./plugins/demo-fireflies.js" spellcheck="false" />
+                <button class="btn small" data-action="install-url">安装</button>
+              </div>
+              <h3>粘贴源码热加载（Blob URL 动态 import）</h3>
+              <textarea id="plugin-source" rows="4" spellcheck="false" placeholder="export default { id, version, setup(ctx) { ... } }"></textarea>
+              <div class="btn-row">
+                <button class="btn small ghost" data-action="fill-example">填入示例</button>
+                <button class="btn small" data-action="install-source">编译并加载</button>
+              </div>
+              <div id="install-status" class="install-status"></div>
+            </div>
+            <div class="btn-row"><button class="btn small ghost" data-action="back">返回</button></div>
+          </section>
+
+          <!-- 深度审批 -->
+          <section class="page" data-page="audit">
+            <h2>深度审批 <span class="muted" style="font-size:12px">运行时 · 插件化规则引擎</span></h2>
+            <p class="muted">每次打开都从当前运行时重新采样；规则由插件注册，卸载自动撤销。与 <code>npm run verify</code> 共用同一份实现。</p>
+            <div class="stat-strip" id="audit-summary"></div>
+            <div class="audit-list" id="audit-findings"></div>
+            <div class="btn-row" style="margin-top:12px">
+              <button class="btn small" data-action="audit-run">重新审批</button>
+              <button class="btn small ghost" data-action="back">返回</button>
+            </div>
+          </section>
+
+          <!-- 存档 -->
+          <section class="page" data-page="saves">
+            <h2>存档管理</h2>
+            <p class="muted">二进制 TLV 信封 · IndexedDB 落盘 · CRC32 校验</p>
+            <div id="save-list" class="save-list"></div>
+            <h3>导入 .bin 文件</h3>
+            <div class="btn-row">
+              <input id="save-file" type="file" accept=".bin,application/octet-stream" />
+              <select id="import-slot"><option value="0">槽位 1</option><option value="1">槽位 2</option><option value="2">槽位 3</option></select>
+              <button class="btn small" data-action="import">导入</button>
+            </div>
+            <div class="btn-row"><button class="btn small ghost" data-action="back">返回</button></div>
+          </section>
+
+          <!-- 操作说明 -->
+          <section class="page" data-page="help">
+            <h2>操作说明</h2>
+            <table class="keys-table">
+              <tr><td><b>W A S D</b></td><td>移动</td></tr>
+              <tr><td><b>鼠标</b></td><td>转动视角</td></tr>
+              <tr><td><b>左键</b></td><td>破坏方块（按住连续）</td></tr>
+              <tr><td><b>右键</b></td><td>在命中面放置当前方块</td></tr>
+              <tr><td><b>1 ~ 9 / 滚轮</b></td><td>选择快捷栏槽位</td></tr>
+              <tr><td><b>Q</b></td><td>快捷栏翻页</td></tr>
+              <tr><td><b>Space</b></td><td>跳跃；创造模式双击切换飞行</td></tr>
+              <tr><td><b>Ctrl / C</b></td><td>飞行时下降</td></tr>
+              <tr><td><b>Shift</b></td><td>疾跑</td></tr>
+              <tr><td><b>F</b></td><td>创造 / 生存模式切换</td></tr>
+              <tr><td><b>R</b></td><td>回到出生点</td></tr>
+              <tr><td><b>T</b></td><td>时间跳到下一时段</td></tr>
+              <tr><td><b>Esc</b></td><td>释放鼠标并呼出暂停菜单</td></tr>
+            </table>
+            <div class="btn-row"><button class="btn small ghost" data-action="back">返回</button></div>
+          </section>
+
+          <!-- 关于 -->
+          <section class="page" data-page="about">
+            <h2>关于</h2>
+            <p>TypeScript + Vite + Three.js，零 UI 框架。核心只装配基础设施，全部游戏能力通过
+              <b>服务令牌 / 事件总线 / 插件作用域</b>提供。</p>
+            <ul class="about-list">
+              <li>7 个内置插件提供兜底实现（低优先级），任何玩法插件都能以更高优先级顶替</li>
+              <li>插件用 <code>ctx.scope.*</code> 注册一切，卸载自动释放，不写 <code>dispose</code></li>
+              <li>方块、贴图、二进制段、事件类型全部命名空间化，第三方不撞车</li>
+              <li>世界体素是扁平 <code>Uint8Array</code>，渲染层消费 dirty 队列分帧重建</li>
+              <li>跨插件数据只走 <code>ArrayBuffer</code> TLV 信封，未知段原样透传</li>
+            </ul>
+            <p class="muted">v0.3 新增：运行时插件市场、主菜单、M2 挖放 / AABB / 物品栏、M4 昼夜与存档落盘。</p>
+            <p class="muted">v0.8 把深度审批做成一等插件：20 条类型化规则对当前运行时重新采样，覆盖插件契约、服务装配、二进制段、沙箱、性能与协议版本；第三方可追加规则，关掉插件即整体撤销。并用 TS 名义类型、const 泛型、satisfies、模板字面量与映射类型，把插件重名、权限写错、事件名乱起等错误前移到编译期。v0.7 用真 3D 密度场替代 2D 高度图：悬垂岩板、浮空岛、天然拱门、连续洞穴管道与立体矿脉都能生成，一列里可以出现「实心 → 空气 → 实心」；在插件仓库关掉「真 3D 地形」即可回退到旧地形。v0.6 加固与体验优化：运行时热加载插件进入受限沙箱、存档支持版本迁移与跨配置校验、依赖语义与生命周期事件补齐；准星射线单源、视角插值、WebGL 上下文自动恢复、昼夜曝光联动与入水遮罩。分区系统把世界按 16×16 chunk 划区，按玩家位置滑动加载窗口实现负坐标无限生成，改动自动归档、往返不丢；性能画像可在插件仓库里看到每个回调的耗时。v0.5 全量 Cordis 化让插件与世界组件共享同一个可逆内核，四条形式化定理覆盖整个插件生态。</p>
+            <div class="btn-row"><button class="btn small ghost" data-action="back">返回</button></div>
+          </section>
+        </div>
+      </aside>
+
+      <div class="menu-side">
+        <div class="side-card">
+          <div class="side-title">WORLD STATUS</div>
+          <div id="side-info"></div>
+        </div>
+      </div>
+    </div>
+
+  </body>
+</html>
