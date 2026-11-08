@@ -1,0 +1,28 @@
+{
+  "name": "voxel-ts",
+  "private": true,
+  "version": "0.8.0",
+  "type": "module",
+  "license": "MIT",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "check": "tsc --noEmit",
+    "test": "npm run verify",
+    "verify": "esbuild tools/verify-architecture.ts --bundle --platform=node --format=cjs --external:three --outfile=.verify-arch.cjs --log-level=error && node .verify-arch.cjs && esbuild tools/verify-gameplay.ts --bundle --platform=node --format=cjs --external:three --outfile=.verify-game.cjs --log-level=error && node .verify-game.cjs && esbuild tools/verify-regressions.ts --bundle --platform=node --format=cjs --external:three --outfile=.verify-reg.cjs --log-level=error && node .verify-reg.cjs && esbuild tools/verify-m2.ts --bundle --platform=node --format=cjs --external:three --outfile=.verify-m2.cjs --log-level=error && node .verify-m2.cjs && esbuild tools/verify-cordis.ts --bundle --platform=node --format=cjs --outfile=.verify-cordis.cjs --log-level=error && node .verify-cordis.cjs && esbuild tools/verify-terrain.ts --bundle --platform=node --format=cjs --external:three --outfile=.verify-terrain.cjs --log-level=error && node .verify-terrain.cjs && esbuild tools/verify-unified.ts --bundle --platform=node --format=cjs --external:three --outfile=.verify-unified.cjs --log-level=error && node .verify-unified.cjs && esbuild tools/verify-hardening.ts --bundle --platform=node --format=cjs --external:three --outfile=.verify-hardening.cjs --log-level=error && node .verify-hardening.cjs && esbuild tools/verify-streaming.ts --bundle --platform=node --format=cjs --external:three --outfile=.verify-streaming.cjs --log-level=error && node .verify-streaming.cjs && esbuild tools/verify-terrain3d.ts --bundle --platform=node --format=cjs --external:three --outfile=.verify-terrain3d.cjs --log-level=error && node .verify-terrain3d.cjs && esbuild tools/verify-audit.ts --bundle --platform=node --format=cjs --external:three --outfile=.verify-audit.cjs --log-level=error && node .verify-audit.cjs"
+  },
+  "dependencies": {
+    "three": "^0.180.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.4",
+    "@types/three": "^0.180.0",
+    "esbuild": "^0.21.5",
+    "typescript": "^5.7.0",
+    "vite": "5.4.20"
+  }
+}
